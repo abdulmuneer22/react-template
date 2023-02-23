@@ -21,6 +21,7 @@ import {
 // third party
 import * as Yup from 'yup';
 import { Formik } from 'formik';
+import { useRegisterUserMutation } from 'store/services/apiSlice';
 
 // project import
 import AnimateButton from 'components/@extended/AnimateButton';
@@ -34,6 +35,7 @@ import { EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
 const AuthRegister = () => {
     const [level, setLevel] = useState();
     const [showPassword, setShowPassword] = useState(false);
+    const [registerUser, { isLoading }] = useRegisterUserMutation();
     const handleClickShowPassword = () => {
         setShowPassword(!showPassword);
     };
@@ -60,6 +62,7 @@ const AuthRegister = () => {
                     email: '',
                     company: '',
                     password: '',
+                    phone: '',
                     submit: null
                 }}
                 validationSchema={Yup.object().shape({
@@ -68,10 +71,25 @@ const AuthRegister = () => {
                     email: Yup.string().email('Must be a valid email').max(255).required('Email is required'),
                     password: Yup.string().max(255).required('Password is required')
                 })}
-                onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+                onSubmit={async (values, { setErrors, setStatus, setSubmitting, setFieldError }) => {
                     try {
                         setStatus({ success: false });
+                        setSubmitting(true);
+                        let payload = {
+                            firstName: values?.firstname,
+                            lastName: values?.lastname,
+                            email: values?.email,
+                            password: values?.password,
+                            phone: values?.phone,
+                            userType: 'Individual'
+                        };
+                        let { error } = await registerUser(payload);
                         setSubmitting(false);
+                        if (error) {
+                            setFieldError('submit', 'Invalid entry, please try again');
+                            return;
+                        }
+                        alert('Success');
                     } catch (err) {
                         console.error(err);
                         setStatus({ success: false });
@@ -160,6 +178,28 @@ const AuthRegister = () => {
                                         onBlur={handleBlur}
                                         onChange={handleChange}
                                         placeholder="demo@company.com"
+                                        inputProps={{}}
+                                    />
+                                    {touched.email && errors.email && (
+                                        <FormHelperText error id="helper-text-email-signup">
+                                            {errors.email}
+                                        </FormHelperText>
+                                    )}
+                                </Stack>
+                            </Grid>
+                            <Grid item xs={12}>
+                                <Stack spacing={1}>
+                                    <InputLabel htmlFor="phone-signup">Phone Number*</InputLabel>
+                                    <OutlinedInput
+                                        fullWidth
+                                        error={Boolean(touched.email && errors.email)}
+                                        id="phone-login"
+                                        type="phone"
+                                        value={values.phone}
+                                        name="phone"
+                                        onBlur={handleBlur}
+                                        onChange={handleChange}
+                                        placeholder="+1 000 000 000"
                                         inputProps={{}}
                                     />
                                     {touched.email && errors.email && (
